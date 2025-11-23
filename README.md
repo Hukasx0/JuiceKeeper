@@ -29,7 +29,7 @@ When the configured threshold is reached while charging, JuiceKeeper can:
   - Default: 15 seconds.
 - **Notification options**:
   - Enable/disable notification sound.
-  - Wake the display when the threshold is reached.
+  - Wake the display when the threshold is reached. (“Prevent automatic sleeping on power adapter when the display is off” is needed, for this option to work properly)
   - Optionally keep the Mac awake while charging until the threshold is reached
 - **Battery-aware icon**: battery SF Symbol with colors reflecting current state.
 
@@ -92,6 +92,11 @@ Without these permissions JuiceKeeper will still run in the menu bar, but you wi
 - If you enable:
   - **Wake display when threshold is reached** – the app will ask macOS to wake the display so the notification is visible.
   - **Keep Mac awake while charging until threshold is reached** – the app will prevent idle system sleep while charging and below the threshold (the display can still sleep), so timers keep running and the alert can be delivered even after long idle periods.
+
+For long charging sessions with a black screen, enabling macOS’s own  
+**“Prevent automatic sleeping on power adapter when the display is off”** option helps ensure  
+that the Mac itself stays awake, so JuiceKeeper can keep polling the battery and reliably  
+wake only the display and show the notification when the threshold is reached.
 
 ---
 
