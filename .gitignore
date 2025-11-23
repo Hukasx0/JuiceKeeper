@@ -1,0 +1,32 @@
+## macOS
+.DS_Store
+
+## Xcode
+build/
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+## Swift Package Manager
+.build/
+.swiftpm/
+
+## CocoaPods (not used now, but safe to ignore if added later)
+Pods/
+Podfile.lock
+
+## Carthage (not used now, but safe to ignore if added later)
+Carthage/Build/
+
+## Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+## Misc
+*.swp
+*.swo
+*.orig
+*.log
