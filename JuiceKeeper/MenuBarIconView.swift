@@ -5,14 +5,20 @@ struct MenuBarIconView: View {
     @EnvironmentObject var monitor: BatteryMonitor
 
     var body: some View {
-        let level = monitor.currentPercentage ?? 0
-        let symbolName = symbolName(for: level)
-        let color = color(for: level)
+        if let level = monitor.currentPercentage {
+            let symbolName = symbolName(for: level)
+            let color = color(for: level)
 
-        Image(systemName: symbolName)
-            .symbolRenderingMode(.palette)
-            .foregroundStyle(color, color)
-            .help(tooltipText(for: level))
+            Image(systemName: symbolName)
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(color, color)
+                .help(tooltipText(for: level))
+        } else {
+            Image(systemName: "battery.0")
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(.secondary, .secondary)
+                .help("JuiceKeeper – reading battery status...")
+        }
     }
 
     private func symbolName(for level: Int) -> String {

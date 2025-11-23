@@ -21,6 +21,7 @@ final class AppSettings: ObservableObject {
 
     /// How often (in seconds) the battery level should be polled.
     /// Range is clamped to 1...600 seconds.
+    /// Values below 5 seconds are allowed but may increase energy usage.
     @Published var pollingIntervalSeconds: Double {
         didSet {
             if pollingIntervalSeconds < 1 {
@@ -60,7 +61,7 @@ final class AppSettings: ObservableObject {
         self.userDefaults = userDefaults
 
         let storedThreshold = userDefaults.object(forKey: Key.alertThreshold.rawValue) as? Int
-        alertThreshold = Self.clamp(storedThreshold ?? 80, min: 0, max: 100)
+        alertThreshold = Self.clamp(storedThreshold ?? 80, min: 1, max: 100)
 
         let storedInterval = userDefaults.object(forKey: Key.pollingIntervalSeconds.rawValue) as? Double
         pollingIntervalSeconds = Self.clamp(storedInterval ?? 15, min: 1, max: 600)

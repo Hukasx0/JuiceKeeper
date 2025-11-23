@@ -30,10 +30,12 @@ final class BatteryMonitor: ObservableObject {
 
     /// Manually force a refresh (useful for debugging or future UI).
     func pollOnce() {
-        guard let info = BatteryInfoReader.read() else { return }
+        DispatchQueue.global(qos: .utility).async {
+            guard let info = BatteryInfoReader.read() else { return }
 
-        DispatchQueue.main.async { [weak self] in
-            self?.handleNewInfo(info)
+            DispatchQueue.main.async { [weak self] in
+                self?.handleNewInfo(info)
+            }
         }
     }
 
@@ -74,13 +76,15 @@ final class BatteryMonitor: ObservableObject {
         let interval = settings.pollingIntervalSeconds
         guard interval > 0 else { return }
 
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        let newTimer = Timer(
+            timeInterval: interval,
+            repeats: true
+        ) { [weak self] _ in
             self?.pollOnce()
         }
 
-        if let timer {
-            RunLoop.main.add(timer, forMode: .common)
-        }
+        timer = newTimer
+        RunLoop.main.add(newTimer, forMode: .common)
     }
 
     private func handleNewInfo(_ info: BatteryInfo) {

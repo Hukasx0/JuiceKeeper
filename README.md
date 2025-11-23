@@ -23,9 +23,9 @@ When the configured threshold is reached while charging, JuiceKeeper can:
 - **Menu bar only**: no Dock icon, no regular window.
 - **Configurable battery threshold**:
   - Presets: 80%, 85%, 90%, 95%.
-  - Custom value from 0–100%.
+  - Custom value from 1–100%.
 - **Check interval**:
-  - Polling interval configurable from 5 to 600 seconds.
+  - Polling interval configurable from 1 to 600 seconds. 
   - Default: 15 seconds.
 - **Notification options**:
   - Enable/disable notification sound.
