@@ -119,8 +119,8 @@ struct ContentView: View {
                         get: { Int(settings.pollingIntervalSeconds) },
                         set: { settings.pollingIntervalSeconds = Double($0) }
                     ),
-                    in: 5...600,
-                    step: 5
+                    in: 1...600,
+                    step: 1
                 ) {
                     Text("Check every \(Int(settings.pollingIntervalSeconds)) seconds")
                 }

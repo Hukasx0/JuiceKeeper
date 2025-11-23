@@ -20,11 +20,11 @@ final class AppSettings: ObservableObject {
     }
 
     /// How often (in seconds) the battery level should be polled.
-    /// Range is clamped to 5...600 seconds.
+    /// Range is clamped to 1...600 seconds.
     @Published var pollingIntervalSeconds: Double {
         didSet {
-            if pollingIntervalSeconds < 5 {
-                pollingIntervalSeconds = 5
+            if pollingIntervalSeconds < 1 {
+                pollingIntervalSeconds = 1
             } else if pollingIntervalSeconds > 600 {
                 pollingIntervalSeconds = 600
             }
@@ -63,7 +63,7 @@ final class AppSettings: ObservableObject {
         alertThreshold = Self.clamp(storedThreshold ?? 80, min: 0, max: 100)
 
         let storedInterval = userDefaults.object(forKey: Key.pollingIntervalSeconds.rawValue) as? Double
-        pollingIntervalSeconds = Self.clamp(storedInterval ?? 15, min: 5, max: 600)
+        pollingIntervalSeconds = Self.clamp(storedInterval ?? 15, min: 1, max: 600)
 
         if let storedSound = userDefaults.object(forKey: Key.isSoundEnabled.rawValue) as? Bool {
             isSoundEnabled = storedSound
