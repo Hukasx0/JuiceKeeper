@@ -86,7 +86,7 @@ JuiceKeeper polls your battery level at regular intervals. When the charge cross
 Battery temperature is read directly from the `AppleSmartBattery` IOKit service — no kernel extensions, no drivers, no elevated privileges. When temperature exceeds your threshold, you'll receive a warning notification and the menu bar icon turns red.
 
 ### Keep Awake Feature
-If enabled, JuiceKeeper prevents idle system sleep while charging below the threshold. This ensures alerts fire even during long charging sessions. The display can still sleep normally.
+If enabled, JuiceKeeper prevents idle system sleep while charging **until the threshold is reached**. Once your battery reaches the configured threshold, the sleep prevention is automatically released. This ensures alerts fire even during long charging sessions with the display off. The display can still sleep normally.
 
 > **Tip:** For best results with display-off charging, enable macOS's *"Prevent automatic sleeping on power adapter when the display is off"* option in System Settings → Battery.
 
