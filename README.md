@@ -1,107 +1,110 @@
-## JuiceKeeper
+# 🔋 JuiceKeeper
 
-JuiceKeeper is a minimal macOS menu bar app that helps you protect your MacBook’s battery health by notifying you when the battery reaches a configurable charge level (e.g. 80%, 85%, 90%, 95% or a custom value).
+**A lightweight macOS menu bar application for battery health management.**
 
-The app has **no regular window or Dock icon** – it lives only in the menu bar as a battery icon with a color that reflects the current state.
+JuiceKeeper monitors your MacBook's battery level and temperature, alerting you when charging reaches your configured threshold (e.g., 80%) so you can unplug and preserve battery capacity. It also warns you when your battery is overheating to help prevent thermal damage.
 
-- **White**: normal battery usage above 30%, on battery power  
-- **Orange**: low battery (30% and below)  
-- **Blue**: charging but not yet fully charged  
-- **Green**: fully charged  
-
-When the configured threshold is reached while charging, JuiceKeeper can:
-
-- show a system notification,
-- play a notification sound,
-- (optionally) wake the display,
-- (optionally) keep the Mac awake while charging until the threshold is reached.
+No Dock icon. No window clutter. Just a tiny battery icon in your menu bar, keeping your battery healthy.
 
 ---
 
-## Features
+## ✨ Features
 
-- **Menu bar only**: no Dock icon, no regular window.
-- **Configurable battery threshold**:
-  - Presets: 80%, 85%, 90%, 95%.
-  - Custom value from 1–100%.
-- **Check interval**:
-  - Polling interval configurable from 1 to 600 seconds. 
-  - Default: 15 seconds.
-- **Notification options**:
-  - Enable/disable notification sound.
-  - Wake the display when the threshold is reached. (“Prevent automatic sleeping on power adapter when the display is off” is needed, for this option to work properly)
-  - Optionally keep the Mac awake while charging until the threshold is reached
-- **Battery-aware icon**: battery SF Symbol with colors reflecting current state.
+### Battery Level Monitoring
+- **Smart charging alerts** — Get notified when your battery reaches a configurable threshold (80%, 85%, 90%, 95%, or custom)
+- **One alert per charge cycle** — No notification spam; alerts reset when battery drops below threshold
 
----
+### 🌡️ Temperature Monitoring
+- **Real-time temperature tracking** — Monitor battery temperature via IOKit (no kernel extensions required)
+- **Overheat alerts** — Receive notifications when battery temperature exceeds your configured threshold (default: 45°C)
+- **Visual warning** — Battery icon turns red when overheating
+- **Toggle on/off** — Enable or disable temperature alerts as needed
 
-## Requirements
+### Menu Bar Integration
+- **Lives in your menu bar** — No Dock icon, no windows, just a subtle battery indicator
+- **Color-coded status:**
+  - ⚪ **White** — Normal usage (above 30%, on battery)
+  - 🟠 **Orange** — Low battery (30% and below)
+  - 🔵 **Blue** — Charging
+  - 🟢 **Green** — Fully charged
+  - 🔴 **Red** — Battery overheating
 
-- macOS 15 (or newer)  
-- A Mac with an internal battery (MacBook, etc.)
+### Notification Options
+- **Sound alerts** — Enable or disable notification sounds
+- **Display wake** — Optionally wake your display when an alert fires
+- **Keep awake while charging** — Prevent system sleep until threshold is reached
 
----
-
-## Running the app
-
-1. Open the Xcode project `JuiceKeeper.xcodeproj`.
-2. Select the `JuiceKeeper` target.
-3. Build & run.
-4. The app will appear in the macOS menu bar as a battery icon.
-
-Click the icon to open the popover with:
-
-- current battery status,
-- alert threshold settings (presets + custom),
-- check interval,
-- notification sound toggle,
-- display wake toggle,
-- “keep Mac awake while charging” toggle,
-- quit button.
+### Customization
+- **Polling interval** — Check battery every 1–600 seconds (default: 15s)
+- **Temperature threshold** — Set your overheat warning between 30–50°C
 
 ---
 
-## Notification settings (important)
+## 📋 Requirements
 
-For JuiceKeeper to work correctly and reliably show alerts, you need to enable notifications for the app in macOS Settings:
-
-1. Open **System Settings**.
-2. Go to **Notifications**.
-3. Select **JuiceKeeper** from the list.
-
-Then set:
-
-- **Allow notifications**: **enabled** (ON).  
-- **Alert style**: **Alerts (recommended)** or **Banners**.  
-  - **Recommended**: Alerts (they stay visible until you dismiss them).  
-  - Banners are also OK if you prefer a more lightweight experience.
-- **Show notifications on Lock Screen**: **enabled** (ON).  
-- **Show in Notification Center**: **enabled** (ON).  
-- **Play sound for notifications**: **enabled** (ON)  
-  - (You can disable the sound later both in system settings and in JuiceKeeper’s own settings.)
-
-Without these permissions JuiceKeeper will still run in the menu bar, but you will not see or hear alerts when the battery reaches the configured threshold.
+- **macOS 15** (Sequoia) or newer
+- A Mac with an internal battery (MacBook Air, MacBook Pro, etc.)
 
 ---
 
-## Battery behavior
+## 🚀 Getting Started
 
-- The app periodically reads the current battery level and charging state.
-- When the level crosses your configured threshold upwards (e.g. from 79% to 80%+), **one alert** is fired for that charging cycle.
-- A small hysteresis is used internally so you are not spammed with multiple notifications around the same percentage.
-- If you enable:
-  - **Wake display when threshold is reached** – the app will ask macOS to wake the display so the notification is visible.
-  - **Keep Mac awake while charging until threshold is reached** – the app will prevent idle system sleep while charging and below the threshold (the display can still sleep), so timers keep running and the alert can be delivered even after long idle periods.
+1. Clone the repository or download the source code
+2. Open `JuiceKeeper.xcodeproj` in Xcode
+3. Build and run (⌘R)
+4. JuiceKeeper appears as a battery icon in your menu bar
 
-For long charging sessions with a black screen, enabling macOS’s own  
-**“Prevent automatic sleeping on power adapter when the display is off”** option helps ensure  
-that the Mac itself stays awake, so JuiceKeeper can keep polling the battery and reliably  
-wake only the display and show the notification when the threshold is reached.
+Click the icon to access:
+- Current battery status and temperature
+- Threshold and temperature settings
+- Notification preferences
+- Quit button
 
 ---
 
-## Privacy and safety
+## 🔔 Notification Setup
 
-- JuiceKeeper only reads battery information from the system.
-- No data is sent over the network.
-- All settings are stored locally using `UserDefaults`.
+For JuiceKeeper to deliver alerts reliably, configure notifications in **System Settings**:
+
+1. Open **System Settings** → **Notifications**
+2. Find **JuiceKeeper** in the list
+3. Enable:
+   - ✅ Allow notifications
+   - ✅ Alerts or Banners (Alerts recommended — they stay visible)
+   - ✅ Show on Lock Screen
+   - ✅ Show in Notification Center
+   - ✅ Play sound (optional)
+
+---
+
+## 🔋 How It Works
+
+### Charge Threshold
+JuiceKeeper polls your battery level at regular intervals. When the charge crosses your threshold (e.g., 79% → 80%), it fires a single notification reminding you to unplug. A small hysteresis prevents repeated alerts around the same level.
+
+### Temperature Monitoring
+Battery temperature is read directly from the `AppleSmartBattery` IOKit service — no kernel extensions, no drivers, no elevated privileges. When temperature exceeds your threshold, you'll receive a warning notification and the menu bar icon turns red.
+
+### Keep Awake Feature
+If enabled, JuiceKeeper prevents idle system sleep while charging below the threshold. This ensures alerts fire even during long charging sessions. The display can still sleep normally.
+
+> **Tip:** For best results with display-off charging, enable macOS's *"Prevent automatic sleeping on power adapter when the display is off"* option in System Settings → Battery.
+
+---
+
+## 🔒 Privacy & Security
+
+- **Local only** — All data stays on your Mac
+- **No network access** — JuiceKeeper never connects to the internet
+- **No special permissions** — Uses standard IOKit APIs for battery info
+- **Settings persistence** — Preferences stored in `UserDefaults`
+
+---
+
+## 📄 License
+
+This project is open source under the MIT license. See [LICENSE](LICENSE) for details.
+
+---
+
+**Made by [Hubert Kasperek](https://github.com/Hukasx0)**

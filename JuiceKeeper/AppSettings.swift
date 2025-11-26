@@ -54,6 +54,28 @@ final class AppSettings: ObservableObject {
             persist(.keepAwakeWhileCharging, keepAwakeWhileCharging)
         }
     }
+    
+    // MARK: - Temperature Monitoring Settings
+    
+    /// Whether temperature monitoring and alerts are enabled.
+    @Published var isTemperatureAlertEnabled: Bool {
+        didSet {
+            persist(.isTemperatureAlertEnabled, isTemperatureAlertEnabled)
+        }
+    }
+    
+    /// Temperature threshold in degrees Celsius at which we fire an alert.
+    /// Range is clamped to 30...50°C. Typical safe operating range is under 35°C.
+    @Published var temperatureThresholdCelsius: Double {
+        didSet {
+            if temperatureThresholdCelsius < 30 {
+                temperatureThresholdCelsius = 30
+            } else if temperatureThresholdCelsius > 50 {
+                temperatureThresholdCelsius = 50
+            }
+            persist(.temperatureThresholdCelsius, temperatureThresholdCelsius)
+        }
+    }
 
     private let userDefaults: UserDefaults
 
@@ -83,6 +105,16 @@ final class AppSettings: ObservableObject {
         } else {
             keepAwakeWhileCharging = false
         }
+        
+        // Temperature monitoring defaults: enabled at 45°C threshold
+        if let storedTempAlert = userDefaults.object(forKey: Key.isTemperatureAlertEnabled.rawValue) as? Bool {
+            isTemperatureAlertEnabled = storedTempAlert
+        } else {
+            isTemperatureAlertEnabled = true
+        }
+        
+        let storedTempThreshold = userDefaults.object(forKey: Key.temperatureThresholdCelsius.rawValue) as? Double
+        temperatureThresholdCelsius = Self.clamp(storedTempThreshold ?? 45.0, min: 30.0, max: 50.0)
     }
 
     private func persist<T>(_ key: Key, _ value: T) {
@@ -101,5 +133,7 @@ final class AppSettings: ObservableObject {
         case isSoundEnabled
         case wakeDisplayOnAlert
         case keepAwakeWhileCharging
+        case isTemperatureAlertEnabled
+        case temperatureThresholdCelsius
     }
 }

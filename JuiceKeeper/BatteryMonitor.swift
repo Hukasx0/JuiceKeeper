@@ -7,6 +7,12 @@ final class BatteryMonitor: ObservableObject {
     @Published private(set) var currentPercentage: Int?
     @Published private(set) var isCharging: Bool = false
     @Published private(set) var isFullyCharged: Bool = false
+    
+    /// Current battery temperature in degrees Celsius, if available.
+    @Published private(set) var currentTemperature: Double?
+    
+    /// Indicates whether the battery temperature exceeds the configured threshold.
+    @Published private(set) var isOverheating: Bool = false
 
     private let settings: AppSettings
     private var timer: Timer?
@@ -15,6 +21,10 @@ final class BatteryMonitor: ObservableObject {
     private var lastPercentage: Int?
     private var lastBatteryInfo: BatteryInfo?
     private var hasAlertedForCurrentChargeCycle = false
+    
+    /// Tracks whether we've already alerted for the current overheating event.
+    /// Resets when temperature drops below threshold with hysteresis.
+    private var hasAlertedForCurrentOverheat = false
 
     init(settings: AppSettings) {
         self.settings = settings
@@ -94,9 +104,11 @@ final class BatteryMonitor: ObservableObject {
         currentPercentage = info.percentage
         isCharging = info.isCharging
         isFullyCharged = info.isFullyCharged
+        currentTemperature = info.temperatureCelsius
 
         updateChargingSleepAssertion(info: info)
         evaluateThresholdIfNeeded(info: info)
+        evaluateTemperatureIfNeeded(info: info)
     }
 
     private func evaluateThresholdIfNeeded(info: BatteryInfo) {
@@ -134,6 +146,47 @@ final class BatteryMonitor: ObservableObject {
             enabled: settings.keepAwakeWhileCharging,
             isCharging: info.isCharging,
             belowThreshold: belowThreshold
+        )
+    }
+    
+    // MARK: - Temperature Monitoring
+    
+    /// Evaluates battery temperature and triggers alert if threshold is exceeded.
+    ///
+    /// Uses a 2°C hysteresis to prevent alert spam when temperature fluctuates around the threshold.
+    private func evaluateTemperatureIfNeeded(info: BatteryInfo) {
+        guard let temperature = info.temperatureCelsius else {
+            isOverheating = false
+            return
+        }
+        
+        let threshold = settings.temperatureThresholdCelsius
+        let currentlyOverheating = temperature >= threshold
+        
+        isOverheating = currentlyOverheating
+        
+        // Reset alert flag when temperature drops sufficiently below threshold (2°C hysteresis)
+        if hasAlertedForCurrentOverheat && temperature < threshold - 2.0 {
+            hasAlertedForCurrentOverheat = false
+        }
+        
+        // Skip if alerts are disabled or we've already alerted for this overheat event
+        guard settings.isTemperatureAlertEnabled,
+              currentlyOverheating,
+              !hasAlertedForCurrentOverheat else {
+            return
+        }
+        
+        hasAlertedForCurrentOverheat = true
+        
+        if settings.wakeDisplayOnAlert {
+            DisplayWakeHelper.wakeDisplayIfPossible()
+        }
+        
+        NotificationManager.shared.notifyBatteryOverheating(
+            temperature: temperature,
+            threshold: threshold,
+            soundEnabled: settings.isSoundEnabled
         )
     }
 }
