@@ -38,6 +38,11 @@ struct MenuBarIconView: View {
     }
 
     private func color(for level: Int) -> Color {
+        // Overheating takes highest priority - show red icon
+        if monitor.isOverheating {
+            return .red
+        }
+        
         if level <= 30 {
             return .orange
         }
@@ -58,12 +63,20 @@ struct MenuBarIconView: View {
             return "JuiceKeeper – reading battery status..."
         }
 
+        var baseText: String
         if monitor.isFullyCharged {
-            return "Battery: \(level)% (fully charged)"
+            baseText = "Battery: \(level)% (fully charged)"
         } else if monitor.isCharging {
-            return "Battery: \(level)% (charging)"
+            baseText = "Battery: \(level)% (charging)"
         } else {
-            return "Battery: \(level)% (on battery power)"
+            baseText = "Battery: \(level)% (on battery power)"
         }
+        
+        // Append temperature warning if overheating
+        if monitor.isOverheating, let temp = monitor.currentTemperature {
+            baseText += String(format: " ⚠️ %.1f°C", temp)
+        }
+        
+        return baseText
     }
 }

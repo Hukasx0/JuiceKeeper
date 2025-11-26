@@ -58,6 +58,31 @@ struct ContentView: View {
             Text("Alert threshold: \(settings.alertThreshold)%")
                 .font(.caption)
                 .foregroundColor(.secondary)
+
+            temperatureStatusView
+        }
+    }
+    
+    @ViewBuilder
+    private var temperatureStatusView: some View {
+        if let temp = monitor.currentTemperature {
+            HStack(spacing: 4) {
+                if monitor.isOverheating {
+                    Image(systemName: "thermometer.sun.fill")
+                        .foregroundColor(.red)
+                    Text(String(format: "Temperature: %.1f°C", temp))
+                        .foregroundColor(.red)
+                        .fontWeight(.medium)
+                    Text("(overheating)")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                } else {
+                    Image(systemName: "thermometer.medium")
+                        .foregroundColor(.secondary)
+                    Text(String(format: "Temperature: %.1f°C", temp))
+                }
+            }
+            .font(.body)
         }
     }
 
@@ -153,6 +178,37 @@ struct ContentView: View {
                 }
             }
             .font(.footnote)
+            
+            Divider()
+            
+            temperatureSettingsSection
+        }
+    }
+    
+    private var temperatureSettingsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Temperature monitoring")
+                .font(.subheadline)
+            
+            Toggle("Alert when battery overheats", isOn: $settings.isTemperatureAlertEnabled)
+            
+            if settings.isTemperatureAlertEnabled {
+                HStack {
+                    Text("Threshold:")
+                    Stepper(
+                        value: $settings.temperatureThresholdCelsius,
+                        in: 30...50,
+                        step: 1
+                    ) {
+                        Text(String(format: "%.0f°C", settings.temperatureThresholdCelsius))
+                    }
+                }
+                .font(.caption)
+                
+                Text("Alert triggers when battery temperature exceeds this value.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            }
         }
     }
 

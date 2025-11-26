@@ -39,6 +39,29 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
         UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
+    
+    /// Fire an immediate battery overheating notification.
+    func notifyBatteryOverheating(temperature: Double, threshold: Double, soundEnabled: Bool) {
+        let content = UNMutableNotificationContent()
+        content.title = "⚠️ Battery overheating"
+        content.body = String(
+            format: "Battery temperature is %.1f°C (threshold: %.0f°C). Consider reducing workload or improving ventilation.",
+            temperature,
+            threshold
+        )
+
+        if soundEnabled {
+            content.sound = .default
+        }
+
+        let request = UNNotificationRequest(
+            identifier: "battery-overheat-\(UUID().uuidString)",
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+    }
 
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
