@@ -218,7 +218,7 @@ struct ContentView: View {
                 Text("JuiceKeeper")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                Text("by Hukasx0")
+                Text("by Hubert Kasperek")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
