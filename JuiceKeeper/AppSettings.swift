@@ -76,6 +76,61 @@ final class AppSettings: ObservableObject {
             persist(.temperatureThresholdCelsius, temperatureThresholdCelsius)
         }
     }
+    
+    // MARK: - Calibration Mode (One-time charge to 100%)
+    
+    /// When enabled, temporarily overrides the threshold to 100% for battery calibration.
+    /// Automatically disables after reaching 100% and restores the previous threshold.
+    /// This setting is intentionally NOT persisted - it's a one-time action per session.
+    @Published var isCalibrationModeActive: Bool = false
+    
+    /// Stores the threshold value before calibration mode was activated.
+    /// Used to restore the original setting after calibration completes.
+    private(set) var preCalibrationThreshold: Int?
+    
+    /// Activates calibration mode, storing the current threshold for later restoration.
+    func activateCalibrationMode() {
+        guard !isCalibrationModeActive else { return }
+        preCalibrationThreshold = alertThreshold
+        isCalibrationModeActive = true
+    }
+    
+    /// Deactivates calibration mode and restores the previous threshold.
+    func deactivateCalibrationMode() {
+        guard isCalibrationModeActive else { return }
+        isCalibrationModeActive = false
+        if let previousThreshold = preCalibrationThreshold {
+            alertThreshold = previousThreshold
+            preCalibrationThreshold = nil
+        }
+    }
+    
+    /// Returns the effective threshold, considering calibration mode.
+    var effectiveThreshold: Int {
+        isCalibrationModeActive ? 100 : alertThreshold
+    }
+    
+    // MARK: - Reminder Notifications
+    
+    /// Whether to send reminder notifications after the threshold is reached.
+    @Published var isReminderEnabled: Bool {
+        didSet {
+            persist(.isReminderEnabled, isReminderEnabled)
+        }
+    }
+    
+    /// Interval in minutes between reminder notifications.
+    /// Range is clamped to 1...60 minutes.
+    @Published var reminderIntervalMinutes: Int {
+        didSet {
+            if reminderIntervalMinutes < 1 {
+                reminderIntervalMinutes = 1
+            } else if reminderIntervalMinutes > 60 {
+                reminderIntervalMinutes = 60
+            }
+            persist(.reminderIntervalMinutes, reminderIntervalMinutes)
+        }
+    }
 
     private let userDefaults: UserDefaults
 
@@ -115,6 +170,16 @@ final class AppSettings: ObservableObject {
         
         let storedTempThreshold = userDefaults.object(forKey: Key.temperatureThresholdCelsius.rawValue) as? Double
         temperatureThresholdCelsius = Self.clamp(storedTempThreshold ?? 45.0, min: 30.0, max: 50.0)
+        
+        // Reminder notifications defaults: disabled, 5-minute interval
+        if let storedReminder = userDefaults.object(forKey: Key.isReminderEnabled.rawValue) as? Bool {
+            isReminderEnabled = storedReminder
+        } else {
+            isReminderEnabled = false
+        }
+        
+        let storedReminderInterval = userDefaults.object(forKey: Key.reminderIntervalMinutes.rawValue) as? Int
+        reminderIntervalMinutes = Self.clamp(storedReminderInterval ?? 5, min: 1, max: 60)
     }
 
     private func persist<T>(_ key: Key, _ value: T) {
@@ -135,5 +200,7 @@ final class AppSettings: ObservableObject {
         case keepAwakeWhileCharging
         case isTemperatureAlertEnabled
         case temperatureThresholdCelsius
+        case isReminderEnabled
+        case reminderIntervalMinutes
     }
 }
