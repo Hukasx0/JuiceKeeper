@@ -82,11 +82,11 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
     
-    /// Fire a notification when calibration mode completes (battery reached 100%).
+    /// Fire a notification when one-time charge to 100% completes.
     func notifyCalibrationComplete(level: Int, restoredThreshold: Int, soundEnabled: Bool) {
         let content = UNMutableNotificationContent()
-        content.title = "✅ Battery calibration complete"
-        content.body = "Battery reached \(level)%. Threshold restored to \(restoredThreshold)%. Unplug the charger now."
+        content.title = "✅ Battery reached 100%"
+        content.body = "One-time charge complete. Threshold restored to \(restoredThreshold)%. Unplug the charger now."
 
         if soundEnabled {
             content.sound = .default

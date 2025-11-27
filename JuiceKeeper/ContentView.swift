@@ -56,7 +56,7 @@ struct ContentView: View {
                 .font(.body)
 
             if settings.isCalibrationModeActive {
-                Text("Calibration mode: charging to 100%")
+                Text("One-time charge: charging to 100%")
                     .font(.caption)
                     .foregroundColor(.orange)
             } else {
@@ -215,8 +215,8 @@ struct ContentView: View {
             }
         )) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Charge to 100% (calibration)")
-                Text("One-time charge for battery calibration.")
+                Text("Charge to 100% (one-time)")
+                Text("Temporarily charge to full capacity.")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Text("Reverts to \(revertThreshold)% after completion.")
