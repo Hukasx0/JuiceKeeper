@@ -27,11 +27,14 @@ final class BatteryMonitor: ObservableObject {
     private var hasAlertedForCurrentOverheat = false
     
     /// Timer for sending reminder notifications at configured intervals.
+    /// Handles both charge threshold and temperature reminders.
     private var reminderTimer: Timer?
     
-    /// Tracks whether we're currently in the reminder-eligible state
-    /// (above threshold while still charging).
-    private var isInReminderState = false
+    /// Tracks whether we're currently in the charge threshold reminder-eligible state.
+    private var isInChargeReminderState = false
+    
+    /// Tracks whether we're currently in the temperature reminder-eligible state.
+    private var isInTemperatureReminderState = false
 
     init(settings: AppSettings) {
         self.settings = settings
@@ -93,8 +96,8 @@ final class BatteryMonitor: ObservableObject {
             .sink { [weak self] isActive in
                 guard let self else { return }
                 self.hasAlertedForCurrentChargeCycle = false
-                self.stopReminderTimer()
-                self.isInReminderState = false
+                self.isInChargeReminderState = false
+                self.updateReminderTimerState()
                 if let info = self.lastBatteryInfo {
                     self.updateChargingSleepAssertion(info: info)
                 }
@@ -104,23 +107,20 @@ final class BatteryMonitor: ObservableObject {
         // React to reminder setting changes
         settings.$isReminderEnabled
             .removeDuplicates()
-            .sink { [weak self] enabled in
-                guard let self else { return }
-                if !enabled {
-                    self.stopReminderTimer()
-                } else if self.isInReminderState {
-                    self.startReminderTimerIfNeeded()
-                }
+            .sink { [weak self] _ in
+                self?.updateReminderTimerState()
             }
             .store(in: &cancellables)
         
         settings.$reminderIntervalMinutes
             .removeDuplicates()
             .sink { [weak self] _ in
-                guard let self, self.isInReminderState else { return }
-                // Restart timer with new interval
-                self.stopReminderTimer()
-                self.startReminderTimerIfNeeded()
+                guard let self else { return }
+                // Restart timer with new interval if active
+                if self.isInChargeReminderState || self.isInTemperatureReminderState {
+                    self.stopReminderTimer()
+                    self.startReminderTimerIfNeeded()
+                }
             }
             .store(in: &cancellables)
     }
@@ -162,8 +162,9 @@ final class BatteryMonitor: ObservableObject {
 
         guard let previous = lastPercentage else { return }
         
-        // Handle reminder state transitions
-        updateReminderState(info: info, threshold: threshold)
+        // Handle charge reminder state transitions
+        updateChargeReminderState(info: info, threshold: threshold)
+        updateReminderTimerState()
         
         // Check for calibration mode completion
         if settings.isCalibrationModeActive && level >= 100 {
@@ -195,7 +196,7 @@ final class BatteryMonitor: ObservableObject {
         
         // Start reminder timer if reminders are enabled
         if settings.isReminderEnabled && info.isCharging {
-            isInReminderState = true
+            isInChargeReminderState = true
             startReminderTimerIfNeeded()
         }
     }
@@ -219,24 +220,48 @@ final class BatteryMonitor: ObservableObject {
         )
     }
     
-    /// Updates the reminder state based on current battery conditions.
-    private func updateReminderState(info: BatteryInfo, threshold: Int) {
+    /// Updates the charge reminder state based on current battery conditions.
+    private func updateChargeReminderState(info: BatteryInfo, threshold: Int) {
         let shouldBeInReminderState = hasAlertedForCurrentChargeCycle &&
                                        info.isCharging &&
                                        info.percentage >= threshold &&
                                        settings.isReminderEnabled &&
                                        !settings.isCalibrationModeActive
         
-        if shouldBeInReminderState && !isInReminderState {
-            isInReminderState = true
-            startReminderTimerIfNeeded()
-        } else if !shouldBeInReminderState && isInReminderState {
-            isInReminderState = false
-            stopReminderTimer()
+        if shouldBeInReminderState && !isInChargeReminderState {
+            isInChargeReminderState = true
+        } else if !shouldBeInReminderState && isInChargeReminderState {
+            isInChargeReminderState = false
         }
     }
     
-    // MARK: - Reminder Timer Management
+    /// Updates the temperature reminder state based on current conditions.
+    private func updateTemperatureReminderState(temperature: Double, threshold: Double) {
+        let shouldBeInReminderState = hasAlertedForCurrentOverheat &&
+                                       temperature >= threshold &&
+                                       settings.isReminderEnabled &&
+                                       settings.isTemperatureAlertEnabled
+        
+        if shouldBeInReminderState && !isInTemperatureReminderState {
+            isInTemperatureReminderState = true
+        } else if !shouldBeInReminderState && isInTemperatureReminderState {
+            isInTemperatureReminderState = false
+        }
+    }
+    
+    // MARK: - Unified Reminder Timer Management
+    
+    /// Starts or stops the reminder timer based on current reminder states.
+    private func updateReminderTimerState() {
+        let needsTimer = settings.isReminderEnabled &&
+                        (isInChargeReminderState || isInTemperatureReminderState)
+        
+        if needsTimer {
+            startReminderTimerIfNeeded()
+        } else {
+            stopReminderTimer()
+        }
+    }
     
     private func startReminderTimerIfNeeded() {
         guard reminderTimer == nil, settings.isReminderEnabled else { return }
@@ -247,7 +272,7 @@ final class BatteryMonitor: ObservableObject {
             timeInterval: intervalSeconds,
             repeats: true
         ) { [weak self] _ in
-            self?.sendReminderNotification()
+            self?.sendReminderNotifications()
         }
         
         reminderTimer = newTimer
@@ -259,25 +284,57 @@ final class BatteryMonitor: ObservableObject {
         reminderTimer = nil
     }
     
-    private func sendReminderNotification() {
-        guard let info = lastBatteryInfo,
-              isInReminderState,
-              info.isCharging,
-              info.percentage >= settings.effectiveThreshold else {
+    /// Sends reminder notifications for all active reminder states.
+    private func sendReminderNotifications() {
+        guard let info = lastBatteryInfo else {
             stopReminderTimer()
-            isInReminderState = false
             return
         }
         
-        if settings.wakeDisplayOnAlert {
-            DisplayWakeHelper.wakeDisplayIfPossible()
+        var didSendNotification = false
+        
+        // Send charge threshold reminder if applicable
+        if isInChargeReminderState &&
+           info.isCharging &&
+           info.percentage >= settings.effectiveThreshold {
+            
+            if settings.wakeDisplayOnAlert {
+                DisplayWakeHelper.wakeDisplayIfPossible()
+            }
+            
+            NotificationManager.shared.notifyBatteryThresholdReminder(
+                level: info.percentage,
+                threshold: settings.effectiveThreshold,
+                soundEnabled: settings.isSoundEnabled
+            )
+            didSendNotification = true
+        } else {
+            isInChargeReminderState = false
         }
         
-        NotificationManager.shared.notifyBatteryThresholdReminder(
-            level: info.percentage,
-            threshold: settings.effectiveThreshold,
-            soundEnabled: settings.isSoundEnabled
-        )
+        // Send temperature reminder if applicable
+        if isInTemperatureReminderState,
+           let temperature = info.temperatureCelsius,
+           temperature >= settings.temperatureThresholdCelsius {
+            
+            if settings.wakeDisplayOnAlert && !didSendNotification {
+                DisplayWakeHelper.wakeDisplayIfPossible()
+            }
+            
+            NotificationManager.shared.notifyTemperatureReminder(
+                temperature: temperature,
+                threshold: settings.temperatureThresholdCelsius,
+                soundEnabled: settings.isSoundEnabled
+            )
+            didSendNotification = true
+        } else {
+            isInTemperatureReminderState = false
+        }
+        
+        // Stop timer if no reminder states are active
+        if !isInChargeReminderState && !isInTemperatureReminderState {
+            stopReminderTimer()
+        }
     }
 
     private func updateChargingSleepAssertion(info: BatteryInfo) {
@@ -297,6 +354,8 @@ final class BatteryMonitor: ObservableObject {
     private func evaluateTemperatureIfNeeded(info: BatteryInfo) {
         guard let temperature = info.temperatureCelsius else {
             isOverheating = false
+            isInTemperatureReminderState = false
+            updateReminderTimerState()
             return
         }
         
@@ -308,7 +367,12 @@ final class BatteryMonitor: ObservableObject {
         // Reset alert flag when temperature drops sufficiently below threshold (2°C hysteresis)
         if hasAlertedForCurrentOverheat && temperature < threshold - 2.0 {
             hasAlertedForCurrentOverheat = false
+            isInTemperatureReminderState = false
         }
+        
+        // Update temperature reminder state
+        updateTemperatureReminderState(temperature: temperature, threshold: threshold)
+        updateReminderTimerState()
         
         // Skip if alerts are disabled or we've already alerted for this overheat event
         guard settings.isTemperatureAlertEnabled,
@@ -328,5 +392,11 @@ final class BatteryMonitor: ObservableObject {
             threshold: threshold,
             soundEnabled: settings.isSoundEnabled
         )
+        
+        // Start temperature reminder if reminders are enabled
+        if settings.isReminderEnabled {
+            isInTemperatureReminderState = true
+            updateReminderTimerState()
+        }
     }
 }

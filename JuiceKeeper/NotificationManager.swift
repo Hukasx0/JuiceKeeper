@@ -100,6 +100,29 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
         UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
+    
+    /// Fire a reminder notification for persistent overheating.
+    func notifyTemperatureReminder(temperature: Double, threshold: Double, soundEnabled: Bool) {
+        let content = UNMutableNotificationContent()
+        content.title = "🌡️ Reminder: Battery still hot"
+        content.body = String(
+            format: "Battery temperature is still %.1f°C (threshold: %.0f°C). Consider reducing workload.",
+            temperature,
+            threshold
+        )
+
+        if soundEnabled {
+            content.sound = .default
+        }
+
+        let request = UNNotificationRequest(
+            identifier: "battery-temp-reminder-\(UUID().uuidString)",
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+    }
 
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
