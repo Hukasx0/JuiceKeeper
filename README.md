@@ -13,6 +13,8 @@ No Dock icon. No window clutter. Just a tiny battery icon in your menu bar, keep
 ### Battery Level Monitoring
 - **Smart charging alerts** — Get notified when your battery reaches a configurable threshold (80%, 85%, 90%, 95%, or custom)
 - **One alert per charge cycle** — No notification spam; alerts reset when battery drops below threshold
+- **Calibration mode** — One-time charge to 100% for battery calibration; automatically reverts to your previous threshold
+- **Reminder notifications** — Repeat reminders at configurable intervals while still charging above threshold
 
 ### 🌡️ Temperature Monitoring
 - **Real-time temperature tracking** — Monitor battery temperature via IOKit (no kernel extensions required)
@@ -37,6 +39,7 @@ No Dock icon. No window clutter. Just a tiny battery icon in your menu bar, keep
 ### Customization
 - **Polling interval** — Check battery every 1–600 seconds (default: 15s)
 - **Temperature threshold** — Set your overheat warning between 30–50°C
+- **Reminder interval** — Set how often to repeat notifications (1–60 minutes, default: 5 min)
 
 ---
 
@@ -81,6 +84,17 @@ For JuiceKeeper to deliver alerts reliably, configure notifications in **System 
 
 ### Charge Threshold
 JuiceKeeper polls your battery level at regular intervals. When the charge crosses your threshold (e.g., 79% → 80%), it fires a single notification reminding you to unplug. A small hysteresis prevents repeated alerts around the same level.
+
+### Calibration Mode
+For periodic battery calibration, enable "Charge to 100%" to temporarily override your threshold. Once the battery reaches 100%, JuiceKeeper:
+1. Sends a completion notification
+2. Automatically restores your previous threshold
+3. Disables calibration mode
+
+This is a one-time action that doesn't persist across app restarts.
+
+### Reminder Notifications
+If you forget to unplug after the initial alert, enable reminder notifications to receive periodic reminders. Configure the interval (1–60 minutes) to suit your workflow. Reminders stop automatically when you unplug or when the battery drops below threshold.
 
 ### Temperature Monitoring
 Battery temperature is read directly from the `AppleSmartBattery` IOKit service — no kernel extensions, no drivers, no elevated privileges. When temperature exceeds your threshold, you'll receive a warning notification and the menu bar icon turns red.

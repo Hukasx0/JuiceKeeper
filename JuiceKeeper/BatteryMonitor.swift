@@ -25,6 +25,13 @@ final class BatteryMonitor: ObservableObject {
     /// Tracks whether we've already alerted for the current overheating event.
     /// Resets when temperature drops below threshold with hysteresis.
     private var hasAlertedForCurrentOverheat = false
+    
+    /// Timer for sending reminder notifications at configured intervals.
+    private var reminderTimer: Timer?
+    
+    /// Tracks whether we're currently in the reminder-eligible state
+    /// (above threshold while still charging).
+    private var isInReminderState = false
 
     init(settings: AppSettings) {
         self.settings = settings
@@ -35,6 +42,7 @@ final class BatteryMonitor: ObservableObject {
 
     deinit {
         timer?.invalidate()
+        reminderTimer?.invalidate()
         ChargingSleepController.shared.deactivateIfNeeded()
     }
 
@@ -78,6 +86,43 @@ final class BatteryMonitor: ObservableObject {
                 self.updateChargingSleepAssertion(info: info)
             }
             .store(in: &cancellables)
+        
+        // React to calibration mode changes
+        settings.$isCalibrationModeActive
+            .removeDuplicates()
+            .sink { [weak self] isActive in
+                guard let self else { return }
+                self.hasAlertedForCurrentChargeCycle = false
+                self.stopReminderTimer()
+                self.isInReminderState = false
+                if let info = self.lastBatteryInfo {
+                    self.updateChargingSleepAssertion(info: info)
+                }
+            }
+            .store(in: &cancellables)
+        
+        // React to reminder setting changes
+        settings.$isReminderEnabled
+            .removeDuplicates()
+            .sink { [weak self] enabled in
+                guard let self else { return }
+                if !enabled {
+                    self.stopReminderTimer()
+                } else if self.isInReminderState {
+                    self.startReminderTimerIfNeeded()
+                }
+            }
+            .store(in: &cancellables)
+        
+        settings.$reminderIntervalMinutes
+            .removeDuplicates()
+            .sink { [weak self] _ in
+                guard let self, self.isInReminderState else { return }
+                // Restart timer with new interval
+                self.stopReminderTimer()
+                self.startReminderTimerIfNeeded()
+            }
+            .store(in: &cancellables)
     }
 
     private func startTimer() {
@@ -113,9 +158,18 @@ final class BatteryMonitor: ObservableObject {
 
     private func evaluateThresholdIfNeeded(info: BatteryInfo) {
         let level = info.percentage
-        let threshold = settings.alertThreshold
+        let threshold = settings.effectiveThreshold
 
         guard let previous = lastPercentage else { return }
+        
+        // Handle reminder state transitions
+        updateReminderState(info: info, threshold: threshold)
+        
+        // Check for calibration mode completion
+        if settings.isCalibrationModeActive && level >= 100 {
+            handleCalibrationComplete(level: level)
+            return
+        }
 
         if hasAlertedForCurrentChargeCycle {
             if level < threshold - 5 {
@@ -138,10 +192,96 @@ final class BatteryMonitor: ObservableObject {
             threshold: threshold,
             soundEnabled: settings.isSoundEnabled
         )
+        
+        // Start reminder timer if reminders are enabled
+        if settings.isReminderEnabled && info.isCharging {
+            isInReminderState = true
+            startReminderTimerIfNeeded()
+        }
+    }
+    
+    /// Handles successful completion of calibration mode.
+    private func handleCalibrationComplete(level: Int) {
+        let previousThreshold = settings.preCalibrationThreshold ?? 80
+        
+        settings.deactivateCalibrationMode()
+        hasAlertedForCurrentChargeCycle = true
+        ChargingSleepController.shared.deactivateIfNeeded()
+        
+        if settings.wakeDisplayOnAlert {
+            DisplayWakeHelper.wakeDisplayIfPossible()
+        }
+        
+        NotificationManager.shared.notifyCalibrationComplete(
+            level: level,
+            restoredThreshold: previousThreshold,
+            soundEnabled: settings.isSoundEnabled
+        )
+    }
+    
+    /// Updates the reminder state based on current battery conditions.
+    private func updateReminderState(info: BatteryInfo, threshold: Int) {
+        let shouldBeInReminderState = hasAlertedForCurrentChargeCycle &&
+                                       info.isCharging &&
+                                       info.percentage >= threshold &&
+                                       settings.isReminderEnabled &&
+                                       !settings.isCalibrationModeActive
+        
+        if shouldBeInReminderState && !isInReminderState {
+            isInReminderState = true
+            startReminderTimerIfNeeded()
+        } else if !shouldBeInReminderState && isInReminderState {
+            isInReminderState = false
+            stopReminderTimer()
+        }
+    }
+    
+    // MARK: - Reminder Timer Management
+    
+    private func startReminderTimerIfNeeded() {
+        guard reminderTimer == nil, settings.isReminderEnabled else { return }
+        
+        let intervalSeconds = Double(settings.reminderIntervalMinutes) * 60.0
+        
+        let newTimer = Timer(
+            timeInterval: intervalSeconds,
+            repeats: true
+        ) { [weak self] _ in
+            self?.sendReminderNotification()
+        }
+        
+        reminderTimer = newTimer
+        RunLoop.main.add(newTimer, forMode: .common)
+    }
+    
+    private func stopReminderTimer() {
+        reminderTimer?.invalidate()
+        reminderTimer = nil
+    }
+    
+    private func sendReminderNotification() {
+        guard let info = lastBatteryInfo,
+              isInReminderState,
+              info.isCharging,
+              info.percentage >= settings.effectiveThreshold else {
+            stopReminderTimer()
+            isInReminderState = false
+            return
+        }
+        
+        if settings.wakeDisplayOnAlert {
+            DisplayWakeHelper.wakeDisplayIfPossible()
+        }
+        
+        NotificationManager.shared.notifyBatteryThresholdReminder(
+            level: info.percentage,
+            threshold: settings.effectiveThreshold,
+            soundEnabled: settings.isSoundEnabled
+        )
     }
 
     private func updateChargingSleepAssertion(info: BatteryInfo) {
-        let belowThreshold = info.percentage < settings.alertThreshold
+        let belowThreshold = info.percentage < settings.effectiveThreshold
         ChargingSleepController.shared.update(
             enabled: settings.keepAwakeWhileCharging,
             isCharging: info.isCharging,

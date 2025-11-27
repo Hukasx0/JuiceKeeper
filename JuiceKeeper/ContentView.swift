@@ -55,9 +55,15 @@ struct ContentView: View {
             Text(statusText)
                 .font(.body)
 
-            Text("Alert threshold: \(settings.alertThreshold)%")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            if settings.isCalibrationModeActive {
+                Text("Calibration mode: charging to 100%")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+            } else {
+                Text("Alert threshold: \(settings.alertThreshold)%")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
 
             temperatureStatusView
         }
@@ -133,6 +139,8 @@ struct ContentView: View {
                     }
                     .font(.caption)
                 }
+                
+                calibrationModeToggle
             }
 
             VStack(alignment: .leading, spacing: 8) {
@@ -157,6 +165,12 @@ struct ContentView: View {
                 }
             }
 
+            Divider()
+            
+            reminderSettingsSection
+            
+            Divider()
+            
             Toggle("Play notification sound", isOn: $settings.isSoundEnabled)
 
             Toggle(isOn: $settings.wakeDisplayOnAlert) {
@@ -182,6 +196,64 @@ struct ContentView: View {
             Divider()
             
             temperatureSettingsSection
+        }
+    }
+    
+    private var calibrationModeToggle: some View {
+        let revertThreshold = settings.isCalibrationModeActive
+            ? (settings.preCalibrationThreshold ?? settings.alertThreshold)
+            : settings.alertThreshold
+        
+        return Toggle(isOn: Binding(
+            get: { settings.isCalibrationModeActive },
+            set: { newValue in
+                if newValue {
+                    settings.activateCalibrationMode()
+                } else {
+                    settings.deactivateCalibrationMode()
+                }
+            }
+        )) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Charge to 100% (calibration)")
+                Text("One-time charge for battery calibration.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text("Reverts to \(revertThreshold)% after completion.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .disabled(settings.isCalibrationModeActive && monitor.currentPercentage ?? 0 >= 100)
+    }
+    
+    private var reminderSettingsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Reminder notifications")
+                .font(.subheadline)
+            
+            Toggle(isOn: $settings.isReminderEnabled) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Repeat notifications")
+                    Text("Remind to unplug while still charging above threshold.")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            if settings.isReminderEnabled {
+                HStack {
+                    Text("Interval:")
+                    Stepper(
+                        value: $settings.reminderIntervalMinutes,
+                        in: 1...60,
+                        step: 1
+                    ) {
+                        Text("\(settings.reminderIntervalMinutes) min")
+                    }
+                }
+                .font(.caption)
+            }
         }
     }
     
