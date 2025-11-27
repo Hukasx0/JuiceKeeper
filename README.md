@@ -19,6 +19,7 @@ No Dock icon. No window clutter. Just a tiny battery icon in your menu bar, keep
 ### 🌡️ Temperature Monitoring
 - **Real-time temperature tracking** — Monitor battery temperature via IOKit (no kernel extensions required)
 - **Overheat alerts** — Receive notifications when battery temperature exceeds your configured threshold (default: 45°C)
+- **Persistent overheat reminders** — Periodic reminders while battery remains hot (uses same interval as charge reminders)
 - **Visual warning** — Battery icon turns red when overheating
 - **Toggle on/off** — Enable or disable temperature alerts as needed
 
@@ -33,13 +34,13 @@ No Dock icon. No window clutter. Just a tiny battery icon in your menu bar, keep
 
 ### Notification Options
 - **Sound alerts** — Enable or disable notification sounds
-- **Display wake** — Optionally wake your display when an alert fires
+- **Display wake** — Wake your display before any notification (threshold, temperature, reminders, calibration)
 - **Keep awake while charging** — Prevent system sleep until threshold is reached
 
 ### Customization
 - **Polling interval** — Check battery every 1–600 seconds (default: 15s)
 - **Temperature threshold** — Set your overheat warning between 30–50°C
-- **Reminder interval** — Set how often to repeat notifications (1–60 minutes, default: 5 min)
+- **Reminder interval** — Set how often to repeat notifications for both charge and temperature alerts (1–60 minutes, default: 5 min)
 
 ---
 
@@ -94,7 +95,11 @@ For periodic battery calibration, enable "Charge to 100%" to temporarily overrid
 This is a one-time action that doesn't persist across app restarts.
 
 ### Reminder Notifications
-If you forget to unplug after the initial alert, enable reminder notifications to receive periodic reminders. Configure the interval (1–60 minutes) to suit your workflow. Reminders stop automatically when you unplug or when the battery drops below threshold.
+Enable reminder notifications to receive periodic alerts when conditions persist:
+- **Charge reminders** — If you forget to unplug after reaching the threshold, reminders continue while still charging
+- **Temperature reminders** — If battery remains overheated, reminders continue until temperature drops
+
+Configure the interval (1–60 minutes) to suit your workflow. One setting controls both reminder types. Reminders stop automatically when the triggering condition resolves.
 
 ### Temperature Monitoring
 Battery temperature is read directly from the `AppleSmartBattery` IOKit service — no kernel extensions, no drivers, no elevated privileges. When temperature exceeds your threshold, you'll receive a warning notification and the menu bar icon turns red.

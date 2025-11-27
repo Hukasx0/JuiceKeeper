@@ -175,8 +175,8 @@ struct ContentView: View {
 
             Toggle(isOn: $settings.wakeDisplayOnAlert) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Wake display when threshold is reached")
-                    Text("Works while Mac is awake (display-only sleep).")
+                    Text("Wake display on notifications")
+                    Text("Wakes display before showing any alert.")
                         .font(.footnote)
                         .foregroundColor(.secondary)
                 }
@@ -235,7 +235,10 @@ struct ContentView: View {
             Toggle(isOn: $settings.isReminderEnabled) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Repeat notifications")
-                    Text("Remind to unplug while still charging above threshold.")
+                    Text("Periodic reminders for charge threshold")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    Text("and overheating.")
                         .font(.footnote)
                         .foregroundColor(.secondary)
                 }
