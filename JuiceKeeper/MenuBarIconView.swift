@@ -77,6 +77,23 @@ struct MenuBarIconView: View {
             baseText += String(format: " ⚠️ %.1f°C", temp)
         }
         
+        // Append high-level health details if available, keeping the tooltip concise.
+        if let health = monitor.healthSummary {
+            var parts: [String] = []
+            
+            if let maxCapacity = health.maximumCapacityPercent {
+                parts.append("max \(maxCapacity)%")
+            }
+            
+            if let cycles = health.cycleCount {
+                parts.append("\(cycles) cycles")
+            }
+            
+            if !parts.isEmpty {
+                baseText += " – " + parts.joined(separator: ", ")
+            }
+        }
+        
         return baseText
     }
 }

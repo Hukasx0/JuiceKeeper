@@ -66,6 +66,7 @@ struct ContentView: View {
             }
 
             temperatureStatusView
+            batteryHealthView
         }
     }
     
@@ -89,6 +90,63 @@ struct ContentView: View {
                 }
             }
             .font(.body)
+        }
+    }
+    
+    @ViewBuilder
+    private var batteryHealthView: some View {
+        if let summary = monitor.healthSummary,
+           (summary.maximumCapacityPercent != nil ||
+            summary.cycleCount != nil ||
+            summary.conditionDescription != nil) {
+            
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Image(systemName: "battery.100")
+                    .foregroundColor(healthColor(for: summary.maximumCapacityPercent))
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    if let maxPercent = summary.maximumCapacityPercent {
+                        Text("Maximum capacity: \(maxPercent)%")
+                    }
+                    
+                    if let detailsText = healthDetailsText(for: summary) {
+                        Text(detailsText)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .font(.footnote)
+            }
+        }
+    }
+    
+    private func healthDetailsText(for summary: BatteryMonitor.BatteryHealthSummary) -> String? {
+        var parts: [String] = []
+        
+        if let cycles = summary.cycleCount {
+            parts.append("Cycles: \(cycles)")
+        }
+        
+        if let condition = summary.conditionDescription?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !condition.isEmpty {
+            parts.append("Condition: \(condition)")
+        }
+        
+        return parts.isEmpty ? nil : parts.joined(separator: " • ")
+    }
+    
+    private func healthColor(for maximumCapacityPercent: Int?) -> Color {
+        guard let value = maximumCapacityPercent else {
+            return .secondary
+        }
+        
+        switch value {
+        case ..<80:
+            return .red
+        case 80..<90:
+            return .orange
+        default:
+            return .green
         }
     }
 

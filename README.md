@@ -23,6 +23,13 @@ No Dock icon. No window clutter. Just a tiny battery icon in your menu bar, keep
 - **Visual warning** — Battery icon turns red when overheating
 - **Toggle on/off** — Enable or disable temperature alerts as needed
 
+### 🩺 Battery Health
+- **Cycle count** — Track how many charge cycles your battery has completed
+- **Maximum capacity** — See your battery's current maximum capacity as a percentage of its original design capacity (just like macOS Battery settings)
+- **Condition status** — View the system-reported battery condition (e.g., "Good", "Fair", "Service Recommended")
+- **Color-coded health indicator** — Green (≥90%), orange (80–89%), red (<80%)
+- **Tooltip details** — Hover over the menu bar icon for a quick health summary
+
 ### Menu Bar Integration
 - **Lives in your menu bar** — No Dock icon, no windows, just a subtle battery indicator
 - **Color-coded status:**
@@ -60,6 +67,7 @@ No Dock icon. No window clutter. Just a tiny battery icon in your menu bar, keep
 
 Click the icon to access:
 - Current battery status and temperature
+- Battery health info (cycle count, maximum capacity, condition)
 - Threshold and temperature settings
 - Notification preferences
 - Quit button
@@ -103,6 +111,14 @@ Configure the interval (1–60 minutes) to suit your workflow. One setting contr
 
 ### Temperature Monitoring
 Battery temperature is read directly from the `AppleSmartBattery` IOKit service — no kernel extensions, no drivers, no elevated privileges. When temperature exceeds your threshold, you'll receive a warning notification and the menu bar icon turns red.
+
+### Battery Health
+JuiceKeeper reads battery health metrics from the `AppleSmartBattery` IOKit service using standard macOS APIs:
+- **Cycle count** — Total charge cycles completed
+- **Maximum capacity** — Calculated as `AppleRawMaxCapacity / DesignCapacity × 100%`, matching the value shown in macOS System Information
+- **Condition** — The system-reported `BatteryHealth` string
+
+These values are refreshed alongside regular battery polling (default: every 15 seconds). All fields are optional and gracefully hidden if unavailable on your hardware or macOS version.
 
 ### Keep Awake Feature
 If enabled, JuiceKeeper prevents idle system sleep while charging **until the threshold is reached**. Once your battery reaches the configured threshold, the sleep prevention is automatically released. This ensures alerts fire even during long charging sessions with the display off. The display can still sleep normally.

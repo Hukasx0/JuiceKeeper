@@ -13,6 +13,24 @@ final class BatteryMonitor: ObservableObject {
     
     /// Indicates whether the battery temperature exceeds the configured threshold.
     @Published private(set) var isOverheating: Bool = false
+    
+    /// Snapshot of long-term battery health information, derived from the most recent poll.
+    /// This is intentionally not @Published – updates are driven by the primary published fields.
+    struct BatteryHealthSummary {
+        let cycleCount: Int?
+        let maximumCapacityPercent: Int?
+        let conditionDescription: String?
+    }
+    
+    /// Most recent health summary for use in the UI, if available.
+    var healthSummary: BatteryHealthSummary? {
+        guard let info = lastBatteryInfo else { return nil }
+        return BatteryHealthSummary(
+            cycleCount: info.cycleCount,
+            maximumCapacityPercent: info.maximumCapacityPercent,
+            conditionDescription: info.conditionDescription
+        )
+    }
 
     private let settings: AppSettings
     private var timer: Timer?

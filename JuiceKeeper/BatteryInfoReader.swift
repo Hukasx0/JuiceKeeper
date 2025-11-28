@@ -10,6 +10,17 @@ struct BatteryInfo {
     /// Battery temperature in degrees Celsius.
     /// Returns `nil` if temperature data is unavailable.
     let temperatureCelsius: Double?
+    
+    /// Number of charge cycles the battery has gone through, if available.
+    let cycleCount: Int?
+    
+    /// Battery's maximum charge relative to its original design capacity, as a percentage (0–100).
+    /// This is similar to the "Maximum Capacity" value shown in macOS Battery settings.
+    let maximumCapacityPercent: Int?
+    
+    /// Human-readable health or condition string provided by the system, if available.
+    /// Example values include "Good", "Fair", or "Service Recommended" depending on macOS version.
+    let conditionDescription: String?
 }
 
 /// Reads battery information from the system using IOKit.
@@ -51,23 +62,45 @@ enum BatteryInfoReader {
             let isCharging = (description[kIOPSIsChargingKey as String] as? Bool) ?? false
             let isFullyCharged = (description[kIOPSIsChargedKey as String] as? Bool) ?? false
             let temperature = readBatteryTemperature()
+            let healthMetrics = readBatteryHealthMetrics()
+
+            let maximumCapacityPercent: Int?
+            if let metrics = healthMetrics,
+               let rawMaxCapacity = metrics.rawMaxCapacity,
+               let designCapacity = metrics.designCapacity,
+               designCapacity > 0 {
+                // Use AppleRawMaxCapacity (mAh) / DesignCapacity (mAh) for accurate health %.
+                let ratio = Double(rawMaxCapacity) / Double(designCapacity)
+                let percent = min(100, Int((ratio * 100.0).rounded()))
+                // Discard obviously bogus values instead of showing misleading data.
+                if (1...100).contains(percent) {
+                    maximumCapacityPercent = percent
+                } else {
+                    maximumCapacityPercent = nil
+                }
+            } else {
+                maximumCapacityPercent = nil
+            }
 
             return BatteryInfo(
                 percentage: percentage,
                 isCharging: isCharging,
                 isFullyCharged: isFullyCharged,
-                temperatureCelsius: temperature
+                temperatureCelsius: temperature,
+                cycleCount: healthMetrics?.cycleCount,
+                maximumCapacityPercent: maximumCapacityPercent,
+                conditionDescription: healthMetrics?.healthDescription
             )
         }
 
         return nil
     }
     
-    // MARK: - Temperature Reading via IOKit
+    // MARK: - Temperature & Health Reading via IOKit
     
     /// Reads battery temperature directly from the AppleSmartBattery IOKit service.
     ///
-    /// The temperature is reported in centikelvin (1/100 of a Kelvin) by the SMC,
+    /// The temperature is reported in decikelvin (1/10 of a Kelvin) by the SMC,
     /// and we convert it to degrees Celsius for display purposes.
     private static func readBatteryTemperature() -> Double? {
         var serviceIterator: io_iterator_t = 0
@@ -89,7 +122,7 @@ enum BatteryInfoReader {
         }
         
         defer {
-            IOObjectRelease(service)
+        IOObjectRelease(service)
         }
         
         // Read the Temperature property directly from AppleSmartBattery
@@ -113,5 +146,70 @@ enum BatteryInfoReader {
         let celsius = (Double(temperatureRaw) / 10.0) - 273.15
         
         return celsius
+    }
+    
+    /// Raw health metrics fetched from the AppleSmartBattery service.
+    private struct BatteryHealthMetrics {
+        let cycleCount: Int?
+        /// Raw maximum capacity in mAh (AppleRawMaxCapacity), not the percentage-based MaxCapacity.
+        let rawMaxCapacity: Int?
+        let designCapacity: Int?
+        let healthDescription: String?
+    }
+    
+    /// Reads long-term battery health metrics such as cycle count and design capacity.
+    ///
+    /// These values change infrequently, so we read them opportunistically alongside
+    /// the regular battery status. All fields are optional to keep the app resilient
+    /// across macOS versions and hardware that may not expose every key.
+    private static func readBatteryHealthMetrics() -> BatteryHealthMetrics? {
+        var serviceIterator: io_iterator_t = 0
+        
+        let matchingDict = IOServiceMatching("AppleSmartBattery")
+        let result = IOServiceGetMatchingServices(kIOMainPortDefault, matchingDict, &serviceIterator)
+        
+        guard result == KERN_SUCCESS else {
+            return nil
+        }
+        
+        defer {
+            IOObjectRelease(serviceIterator)
+        }
+        
+        let service = IOIteratorNext(serviceIterator)
+        guard service != IO_OBJECT_NULL else {
+            return nil
+        }
+        
+        defer {
+            IOObjectRelease(service)
+        }
+        
+        var propertiesRef: Unmanaged<CFMutableDictionary>?
+        let propertiesResult = IORegistryEntryCreateCFProperties(
+            service,
+            &propertiesRef,
+            kCFAllocatorDefault,
+            0
+        )
+        
+        guard propertiesResult == KERN_SUCCESS,
+              let properties = propertiesRef?.takeRetainedValue() as? [String: Any]
+        else {
+            return nil
+        }
+        
+        let cycleCount = properties["CycleCount"] as? Int
+        // Use AppleRawMaxCapacity (mAh) instead of MaxCapacity which may already be a percentage.
+        let rawMaxCapacity = properties["AppleRawMaxCapacity"] as? Int
+        let designCapacity = properties["DesignCapacity"] as? Int
+        let healthDescription = properties["BatteryHealth"] as? String
+        
+        return BatteryHealthMetrics(
+            cycleCount: cycleCount,
+            rawMaxCapacity: rawMaxCapacity,
+            designCapacity: designCapacity,
+            healthDescription: healthDescription
+        )
     }
 }
