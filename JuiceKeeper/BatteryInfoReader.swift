@@ -14,7 +14,8 @@ struct BatteryInfo {
     /// Number of charge cycles the battery has gone through, if available.
     let cycleCount: Int?
     
-    /// Battery's maximum charge relative to its original design capacity, as a percentage (0–100).
+    /// Battery's maximum charge relative to its original design capacity, as a percentage.
+    /// Typically ranges from 0–100%, but may exceed 100% for new or well-maintained batteries.
     /// This is similar to the "Maximum Capacity" value shown in macOS Battery settings.
     let maximumCapacityPercent: Int?
     
@@ -70,10 +71,12 @@ enum BatteryInfoReader {
                let designCapacity = metrics.designCapacity,
                designCapacity > 0 {
                 // Use AppleRawMaxCapacity (mAh) / DesignCapacity (mAh) for accurate health %.
+                // May exceed 100% for new or well-maintained batteries.
                 let ratio = Double(rawMaxCapacity) / Double(designCapacity)
-                let percent = min(100, Int((ratio * 100.0).rounded()))
+                let percent = Int((ratio * 100.0).rounded())
                 // Discard obviously bogus values instead of showing misleading data.
-                if (1...100).contains(percent) {
+                // Allow up to 150% to accommodate batteries that exceed design capacity.
+                if (1...150).contains(percent) {
                     maximumCapacityPercent = percent
                 } else {
                     maximumCapacityPercent = nil
