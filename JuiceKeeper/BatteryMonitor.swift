@@ -19,6 +19,8 @@ final class BatteryMonitor: ObservableObject {
     struct BatteryHealthSummary {
         let cycleCount: Int?
         let maximumCapacityPercent: Int?
+        let maximumCapacityMah: Int?
+        let designCapacityMah: Int?
         let conditionDescription: String?
     }
     
@@ -28,6 +30,8 @@ final class BatteryMonitor: ObservableObject {
         return BatteryHealthSummary(
             cycleCount: info.cycleCount,
             maximumCapacityPercent: info.maximumCapacityPercent,
+            maximumCapacityMah: info.maximumCapacityMah,
+            designCapacityMah: info.designCapacityMah,
             conditionDescription: info.conditionDescription
         )
     }
