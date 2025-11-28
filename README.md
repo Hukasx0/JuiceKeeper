@@ -13,7 +13,7 @@ No Dock icon. No window clutter. Just a tiny battery icon in your menu bar, keep
 ### Battery Level Monitoring
 - **Smart charging alerts** — Get notified when your battery reaches a configurable threshold (80%, 85%, 90%, 95%, or custom)
 - **One alert per charge cycle** — No notification spam; alerts reset when battery drops below threshold
-- **Calibration mode** — One-time charge to 100% for battery calibration; automatically reverts to your previous threshold
+- **One-time charge to 100%** — Temporarily charge to full capacity; automatically reverts to your previous threshold
 - **Reminder notifications** — Repeat reminders at configurable intervals while still charging above threshold
 
 ### 🌡️ Temperature Monitoring
@@ -41,7 +41,7 @@ No Dock icon. No window clutter. Just a tiny battery icon in your menu bar, keep
 
 ### Notification Options
 - **Sound alerts** — Enable or disable notification sounds
-- **Display wake** — Wake your display before any notification (threshold, temperature, reminders, calibration)
+- **Display wake** — Wake your display before any notification (threshold, temperature, reminders, one-time full battery charge)
 - **Keep awake while charging** — Prevent system sleep until threshold is reached
 
 ### Customization
@@ -94,11 +94,11 @@ For JuiceKeeper to deliver alerts reliably, configure notifications in **System 
 ### Charge Threshold
 JuiceKeeper polls your battery level at regular intervals. When the charge crosses your threshold (e.g., 79% → 80%), it fires a single notification reminding you to unplug. A small hysteresis prevents repeated alerts around the same level.
 
-### Calibration Mode
-For periodic battery calibration, enable "Charge to 100%" to temporarily override your threshold. Once the battery reaches 100%, JuiceKeeper:
+### One-Time Charge to 100%
+For periodic full charges, enable "Charge to 100% (one-time)" to temporarily override your threshold. Once the battery reaches 100%, JuiceKeeper:
 1. Sends a completion notification
 2. Automatically restores your previous threshold
-3. Disables calibration mode
+3. Disables one-time charge mode
 
 This is a one-time action that doesn't persist across app restarts.
 
