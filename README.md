@@ -1,5 +1,9 @@
 # 🔋 JuiceKeeper
 
+<div align="left">
+  <img src="assets/logo.png" alt="JuiceKeeper Logo" width="128">
+</div>
+
 **A lightweight macOS menu bar application for battery health management.**
 
 JuiceKeeper monitors your MacBook's battery level and temperature, alerting you when charging reaches your configured threshold (e.g., 80%) so you can unplug and preserve battery capacity. It also warns you when your battery is overheating to help prevent thermal damage.
