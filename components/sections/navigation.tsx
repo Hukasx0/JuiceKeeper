@@ -9,7 +9,7 @@ export function Navigation() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
           <Image
-            src="/logo.png"
+            src="/JuiceKeeper/logo.png"
             alt="JuiceKeeper Logo"
             width={32}
             height={32}

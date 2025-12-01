@@ -9,7 +9,7 @@ export function Footer() {
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <div className="flex items-center gap-3">
               <Image
-                src="/logo.png"
+                src="/JuiceKeeper/logo.png"
                 alt="JuiceKeeper Logo"
                 width={32}
                 height={32}

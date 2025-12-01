@@ -9,7 +9,7 @@ export function HeroSection() {
       <div className="mx-auto max-w-4xl text-center">
         <div className="mb-8 flex justify-center">
           <Image
-            src="/logo.png"
+            src="/JuiceKeeper/logo.png"
             alt="JuiceKeeper Logo"
             width={128}
             height={128}
