@@ -5,7 +5,7 @@ import { Zap } from "lucide-react";
 
 export function HeroSection() {
   return (
-    <section className="container mx-auto px-4 py-20 sm:px-6 lg:px-8 lg:py-32">
+    <section className="container mx-auto px-4 pt-12 pb-16 sm:px-6 lg:px-8 lg:pt-20 lg:pb-24">
       <div className="mx-auto max-w-4xl text-center">
         <div className="mb-8 flex justify-center">
           <Image
