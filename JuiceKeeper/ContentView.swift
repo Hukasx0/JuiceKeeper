@@ -109,6 +109,12 @@ struct ContentView: View {
                         Text("Maximum capacity: \(maxPercent)%")
                     }
                     
+                    if let capacityText = healthCapacityMahText(for: summary) {
+                        Text(capacityText)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    
                     if let detailsText = healthDetailsText(for: summary) {
                         Text(detailsText)
                             .font(.caption)
@@ -117,6 +123,18 @@ struct ContentView: View {
                 }
                 .font(.footnote)
             }
+        }
+    }
+    
+    private func healthCapacityMahText(for summary: BatteryMonitor.BatteryHealthSummary) -> String? {
+        guard let maxMah = summary.maximumCapacityMah else {
+            return nil
+        }
+        
+        if let designMah = summary.designCapacityMah {
+            return "\(maxMah) mAh (design: \(designMah) mAh)"
+        } else {
+            return "\(maxMah) mAh"
         }
     }
     

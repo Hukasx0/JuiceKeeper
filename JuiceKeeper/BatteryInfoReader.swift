@@ -19,6 +19,13 @@ struct BatteryInfo {
     /// This is similar to the "Maximum Capacity" value shown in macOS Battery settings.
     let maximumCapacityPercent: Int?
     
+    /// Estimated maximum capacity in milliampere-hours (mAh), if available.
+    /// Derived from AppleRawMaxCapacity reported by the system.
+    let maximumCapacityMah: Int?
+    
+    /// Original design capacity in milliampere-hours (mAh), if available.
+    let designCapacityMah: Int?
+    
     /// Human-readable health or condition string provided by the system, if available.
     /// Example values include "Good", "Fair", or "Service Recommended" depending on macOS version.
     let conditionDescription: String?
@@ -66,6 +73,8 @@ enum BatteryInfoReader {
             let healthMetrics = readBatteryHealthMetrics()
 
             let maximumCapacityPercent: Int?
+            let maximumCapacityMah: Int?
+            let designCapacityMah = healthMetrics?.designCapacity
             if let metrics = healthMetrics,
                let rawMaxCapacity = metrics.rawMaxCapacity,
                let designCapacity = metrics.designCapacity,
@@ -78,11 +87,14 @@ enum BatteryInfoReader {
                 // Allow up to 150% to accommodate batteries that exceed design capacity.
                 if (1...150).contains(percent) {
                     maximumCapacityPercent = percent
+                    maximumCapacityMah = rawMaxCapacity
                 } else {
                     maximumCapacityPercent = nil
+                    maximumCapacityMah = nil
                 }
             } else {
                 maximumCapacityPercent = nil
+                maximumCapacityMah = nil
             }
 
             return BatteryInfo(
@@ -92,6 +104,8 @@ enum BatteryInfoReader {
                 temperatureCelsius: temperature,
                 cycleCount: healthMetrics?.cycleCount,
                 maximumCapacityPercent: maximumCapacityPercent,
+                maximumCapacityMah: maximumCapacityMah,
+                designCapacityMah: designCapacityMah,
                 conditionDescription: healthMetrics?.healthDescription
             )
         }
