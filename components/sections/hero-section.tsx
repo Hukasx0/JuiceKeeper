@@ -18,7 +18,7 @@ export function HeroSection() {
           />
         </div>
         <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-          Keep Your Battery
+          Keep Your Mac's Battery
           <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
             {" "}
             Healthy
