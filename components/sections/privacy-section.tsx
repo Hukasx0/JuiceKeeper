@@ -11,28 +11,28 @@ export function PrivacySection() {
             <div className="flex items-start gap-3">
               <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div>
-                <h4 className="font-semibold">Local Only</h4>
+                <h3 className="text-lg font-semibold">Local Only</h3>
                 <p className="text-sm text-muted-foreground">All data stays on your Mac</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div>
-                <h4 className="font-semibold">No Network Access</h4>
+                <h3 className="text-lg font-semibold">No Network Access</h3>
                 <p className="text-sm text-muted-foreground">JuiceKeeper never connects to the internet</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div>
-                <h4 className="font-semibold">No Special Permissions</h4>
+                <h3 className="text-lg font-semibold">No Special Permissions</h3>
                 <p className="text-sm text-muted-foreground">Uses standard IOKit APIs</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div>
-                <h4 className="font-semibold">Settings Persistence</h4>
+                <h3 className="text-lg font-semibold">Settings Persistence</h3>
                 <p className="text-sm text-muted-foreground">Preferences stored in UserDefaults</p>
               </div>
             </div>

@@ -11,12 +11,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
       <Navigation />
-      <HeroSection />
-      <FeaturesSection />
-      <HowItWorksSection />
-      <RequirementsSection />
-      <PrivacySection />
-      <StatusColorsSection />
+      <main id="main-content" className="flex flex-col">
+        <HeroSection />
+        <FeaturesSection />
+        <HowItWorksSection />
+        <RequirementsSection />
+        <PrivacySection />
+        <StatusColorsSection />
+      </main>
       <Footer />
     </div>
   );
