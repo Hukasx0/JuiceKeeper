@@ -6,14 +6,14 @@ import { Zap } from "lucide-react";
 export function HeroSection() {
   return (
     <section className="container mx-auto px-4 pt-12 pb-16 sm:px-6 lg:px-8 lg:pt-20 lg:pb-24">
-      <div className="mx-auto max-w-4xl text-center">
+      <div className="mx-auto max-w-4xl text-center lg:flex lg:flex-col lg:items-center">
         <div className="mb-8 flex justify-center">
           <Image
             src="/JuiceKeeper/logo.png"
             alt="JuiceKeeper Logo"
             width={128}
             height={128}
-            className="rounded-2xl"
+            className="rounded-2xl lg:h-36 lg:w-36 lg:object-contain"
             priority
           />
         </div>
